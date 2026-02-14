@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { MENU_ITEMS } from "./menu";
 
 type OrderMemo = {
@@ -15,7 +15,8 @@ type Visitor = {
   name: string;
 };
 
-const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 99;
 
 function App() {
   const [newVisitorName, setNewVisitorName] = useState("");
@@ -24,6 +25,9 @@ function App() {
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [orders, setOrders] = useState<OrderMemo[]>([]);
   const [visitorError, setVisitorError] = useState("");
+  const holdStartTimeoutRef = useRef<Map<number, number>>(new Map());
+  const holdIntervalRef = useRef<Map<number, number>>(new Map());
+  const suppressClickRef = useRef<Set<number>>(new Set());
 
   const groupedMenu = useMemo(() => {
     const map = new Map<string, typeof MENU_ITEMS>();
@@ -110,12 +114,84 @@ function App() {
   };
 
   const updateOrderQuantity = (id: number, nextQuantity: number) => {
+    const clamped = Math.min(MAX_QUANTITY, Math.max(MIN_QUANTITY, nextQuantity));
     setOrders((prev) =>
       prev.map((order) =>
-        order.id === id ? { ...order, quantity: nextQuantity } : order
+        order.id === id ? { ...order, quantity: clamped } : order
       )
     );
   };
+  const incrementOrderQuantity = (id: number, delta: number) => {
+    let reachedMax = false;
+    setOrders((prev) =>
+      prev.map((order) => {
+        if (order.id !== id) {
+          return order;
+        }
+        const nextQuantity = Math.min(
+          MAX_QUANTITY,
+          Math.max(MIN_QUANTITY, order.quantity + delta)
+        );
+        if (nextQuantity === MAX_QUANTITY) {
+          reachedMax = true;
+        }
+        return { ...order, quantity: nextQuantity };
+      })
+    );
+    return reachedMax;
+  };
+  const clearIncrementTimers = (id: number) => {
+    const timeoutId = holdStartTimeoutRef.current.get(id);
+    if (timeoutId !== undefined) {
+      window.clearTimeout(timeoutId);
+      holdStartTimeoutRef.current.delete(id);
+    }
+    const intervalId = holdIntervalRef.current.get(id);
+    if (intervalId !== undefined) {
+      window.clearInterval(intervalId);
+      holdIntervalRef.current.delete(id);
+    }
+  };
+  const handlePlusPointerDown = (id: number) => {
+    clearIncrementTimers(id);
+    const timeoutId = window.setTimeout(() => {
+      suppressClickRef.current.add(id);
+      const reachedMaxAtStart = incrementOrderQuantity(id, 1);
+      if (reachedMaxAtStart) {
+        clearIncrementTimers(id);
+        return;
+      }
+      const intervalId = window.setInterval(() => {
+        const reachedMax = incrementOrderQuantity(id, 1);
+        if (reachedMax) {
+          clearIncrementTimers(id);
+        }
+      }, 100);
+      holdIntervalRef.current.set(id, intervalId);
+    }, 300);
+    holdStartTimeoutRef.current.set(id, timeoutId);
+  };
+  const handlePlusPointerStop = (id: number) => {
+    clearIncrementTimers(id);
+  };
+  const handlePlusClick = (id: number) => {
+    if (suppressClickRef.current.has(id)) {
+      suppressClickRef.current.delete(id);
+      return;
+    }
+    incrementOrderQuantity(id, 1);
+  };
+
+  useEffect(() => {
+    return () => {
+      holdStartTimeoutRef.current.forEach((timeoutId) => {
+        window.clearTimeout(timeoutId);
+      });
+      holdIntervalRef.current.forEach((intervalId) => {
+        window.clearInterval(intervalId);
+      });
+    };
+  }, []);
 
   return (
     <>
@@ -145,18 +221,33 @@ function App() {
                   </p>
                   <label className="order-customer-edit">
                     個数を変更
-                    <select
-                      value={String(order.quantity)}
-                      onChange={(event) =>
-                        updateOrderQuantity(order.id, Number(event.target.value))
-                      }
-                    >
-                      {QUANTITY_OPTIONS.map((option) => (
-                        <option key={option} value={String(option)}>
-                          {option}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="quantity-controls">
+                      <div className="stepper" role="group" aria-label="個数ステッパー">
+                        <button
+                          type="button"
+                          className="stepper-button"
+                          aria-label="個数を1減らす"
+                          onClick={() => incrementOrderQuantity(order.id, -1)}
+                        >
+                          -
+                        </button>
+                        <span className="stepper-value" aria-live="polite">
+                          {order.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          className="stepper-button"
+                          aria-label="個数を1増やす"
+                          onClick={() => handlePlusClick(order.id)}
+                          onPointerDown={() => handlePlusPointerDown(order.id)}
+                          onPointerUp={() => handlePlusPointerStop(order.id)}
+                          onPointerCancel={() => handlePlusPointerStop(order.id)}
+                          onPointerLeave={() => handlePlusPointerStop(order.id)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                   </label>
                   <label className="order-customer-edit">
                     注文者を変更
