@@ -1,34 +1,26 @@
 import { FormEvent, useMemo, useState } from "react";
+import { MENU_ITEMS } from "./menu";
 
 type OrderMemo = {
   id: number;
   drink: string;
+  price: number;
   quantity: number;
   customer: string;
   createdAt: Date;
 };
+
 type Visitor = {
   id: number;
   name: string;
 };
 
-const DRINK_OPTIONS = [
-  "ビール",
-  "ハイボール",
-  "レモンサワー",
-  "ジントニック",
-  "モヒート",
-  "ウイスキー",
-  "赤ワイン",
-  "白ワイン",
-  "ノンアルコール"
-];
 const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, index) =>
   String(index + 1)
 );
 
 function App() {
-  const [drink, setDrink] = useState(DRINK_OPTIONS[0]);
+  const [selectedMenuId, setSelectedMenuId] = useState(MENU_ITEMS[0]?.id ?? 0);
   const [quantity, setQuantity] = useState("1");
   const [customer, setCustomer] = useState("");
   const [newVisitorName, setNewVisitorName] = useState("");
@@ -37,8 +29,27 @@ function App() {
   const [error, setError] = useState("");
   const [visitorError, setVisitorError] = useState("");
 
+  const groupedMenu = useMemo(() => {
+    const map = new Map<string, typeof MENU_ITEMS>();
+    for (const item of MENU_ITEMS) {
+      const list = map.get(item.category) ?? [];
+      list.push(item);
+      map.set(item.category, list);
+    }
+    return Array.from(map.entries());
+  }, []);
+
+  const selectedMenuItem = useMemo(
+    () => MENU_ITEMS.find((item) => item.id === selectedMenuId),
+    [selectedMenuId]
+  );
+
   const totalDrinks = useMemo(
     () => orders.reduce((sum, order) => sum + order.quantity, 0),
+    [orders]
+  );
+  const totalAmount = useMemo(
+    () => orders.reduce((sum, order) => sum + order.quantity * order.price, 0),
     [orders]
   );
 
@@ -46,6 +57,10 @@ function App() {
     event.preventDefault();
     const parsedQuantity = Number.parseInt(quantity, 10);
 
+    if (!selectedMenuItem) {
+      setError("お酒を選択してください。");
+      return;
+    }
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
       setError("個数は1以上の整数で入力してください。");
       return;
@@ -53,18 +68,19 @@ function App() {
 
     const nextOrder: OrderMemo = {
       id: Date.now(),
-      drink,
+      drink: selectedMenuItem.name,
+      price: selectedMenuItem.price,
       quantity: parsedQuantity,
       customer: customer.trim(),
       createdAt: new Date()
     };
 
     setOrders((prev) => [nextOrder, ...prev]);
-    setDrink(DRINK_OPTIONS[0]);
     setQuantity("1");
     setCustomer("");
     setError("");
   };
+
   const addVisitor = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalized = newVisitorName.trim();
@@ -86,6 +102,7 @@ function App() {
     setNewVisitorName("");
     setVisitorError("");
   };
+
   const removeVisitor = (id: number) => {
     setVisitors((prev) => prev.filter((visitor) => visitor.id !== id));
     setCustomer((prev) => {
@@ -100,6 +117,7 @@ function App() {
   const removeOrder = (id: number) => {
     setOrders((prev) => prev.filter((order) => order.id !== id));
   };
+
   const updateOrderCustomer = (id: number, nextCustomer: string) => {
     setOrders((prev) =>
       prev.map((order) =>
@@ -113,23 +131,32 @@ function App() {
       <section className="panel">
         <h1>バー注文メモ</h1>
         <p className="subtitle">
-          お酒の種類・個数をすばやく記録し、注文者は来店者から選択します。
+          全メニューを一覧で見ながら選択して、注文メモを追加できます。
         </p>
 
         <form className="form" onSubmit={handleSubmit}>
-          <label>
-            お酒
-            <select
-              value={drink}
-              onChange={(event) => setDrink(event.target.value)}
-            >
-              {DRINK_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="menu-browser">
+            {groupedMenu.map(([menuCategory, items]) => (
+              <section key={menuCategory} className="menu-category">
+                <h3>{menuCategory}</h3>
+                <div className="menu-items">
+                  {items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`menu-item${
+                        selectedMenuId === item.id ? " active" : ""
+                      }`}
+                      onClick={() => setSelectedMenuId(item.id)}
+                    >
+                      <span>{item.name}</span>
+                      <small>{item.price}円</small>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
 
           <label>
             個数
@@ -161,6 +188,12 @@ function App() {
           </label>
 
           {error ? <p className="error">{error}</p> : null}
+          {selectedMenuItem ? (
+            <p className="subtitle">
+              選択中: {selectedMenuItem.category} / {selectedMenuItem.name} (
+              {selectedMenuItem.price}円)
+            </p>
+          ) : null}
 
           <button type="submit">メモを追加</button>
         </form>
@@ -204,7 +237,7 @@ function App() {
       <section className="panel">
         <h2>現在のメモ</h2>
         <p className="subtitle">
-          {orders.length} 件 / 合計 {totalDrinks} 杯
+          {orders.length} 件 / 合計 {totalDrinks} 杯 / {totalAmount}円
         </p>
 
         {orders.length === 0 ? (
@@ -216,7 +249,8 @@ function App() {
                 <div>
                   <strong>{order.drink}</strong>
                   <p>
-                    {order.quantity} 杯 / {order.customer || "注文者未入力"}
+                    {order.quantity} 杯 ({order.price}円/杯) /{" "}
+                    {order.customer || "注文者未入力"}
                   </p>
                   <label className="order-customer-edit">
                     注文者を変更

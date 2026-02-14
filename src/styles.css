@@ -47,11 +47,55 @@ h2 {
   gap: 12px;
 }
 
+.menu-browser {
+  display: grid;
+  gap: 12px;
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid #d7dce3;
+  border-radius: 10px;
+  padding: 10px;
+  background: #fafbfc;
+}
+
+.menu-category h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.menu-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.menu-item {
+  border: 1px solid #c8d0da;
+  border-radius: 8px;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+  padding: 8px 10px;
+  display: grid;
+  gap: 2px;
+}
+
+.menu-item small {
+  color: #4b5563;
+}
+
+.menu-item.active {
+  border-color: #0f62fe;
+  background: #eef4ff;
+}
+
 label {
   display: grid;
   gap: 6px;
   font-size: 14px;
   color: #2d3748;
+  min-width: 0;
 }
 
 input {
@@ -59,6 +103,8 @@ input {
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 15px;
+  width: 100%;
+  min-width: 0;
 }
 
 select {
@@ -67,6 +113,9 @@ select {
   padding: 10px 12px;
   font-size: 15px;
   background: #fff;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 button {
@@ -123,11 +172,16 @@ button:hover {
 .order {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 10px 12px;
   border: 1px solid #d7dce3;
   border-radius: 10px;
+}
+
+.order > div {
+  flex: 1;
+  min-width: 0;
 }
 
 .order p,
@@ -139,7 +193,8 @@ button:hover {
   margin-top: 8px;
 }
 
-.order-customer-edit input {
+.order-customer-edit input,
+.order-customer-edit select {
   margin-top: 4px;
 }
 
