@@ -19,6 +19,9 @@ const DRINK_OPTIONS = [
   "白ワイン",
   "ノンアルコール"
 ];
+const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, index) =>
+  String(index + 1)
+);
 
 function App() {
   const [drink, setDrink] = useState(DRINK_OPTIONS[0]);
@@ -87,13 +90,16 @@ function App() {
 
           <label>
             個数
-            <input
-              type="number"
-              min="1"
-              step="1"
+            <select
               value={quantity}
               onChange={(event) => setQuantity(event.target.value)}
-            />
+            >
+              {QUANTITY_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>
