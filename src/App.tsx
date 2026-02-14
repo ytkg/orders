@@ -15,19 +15,14 @@ type Visitor = {
   name: string;
 };
 
-const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, index) =>
-  String(index + 1)
-);
+const QUANTITY_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 
 function App() {
-  const [selectedMenuId, setSelectedMenuId] = useState(MENU_ITEMS[0]?.id ?? 0);
-  const [quantity, setQuantity] = useState("1");
-  const [customer, setCustomer] = useState("");
   const [newVisitorName, setNewVisitorName] = useState("");
+  const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [orders, setOrders] = useState<OrderMemo[]>([]);
-  const [error, setError] = useState("");
   const [visitorError, setVisitorError] = useState("");
 
   const groupedMenu = useMemo(() => {
@@ -40,11 +35,6 @@ function App() {
     return Array.from(map.entries());
   }, []);
 
-  const selectedMenuItem = useMemo(
-    () => MENU_ITEMS.find((item) => item.id === selectedMenuId),
-    [selectedMenuId]
-  );
-
   const totalDrinks = useMemo(
     () => orders.reduce((sum, order) => sum + order.quantity, 0),
     [orders]
@@ -54,32 +44,21 @@ function App() {
     [orders]
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const parsedQuantity = Number.parseInt(quantity, 10);
-
-    if (!selectedMenuItem) {
-      setError("お酒を選択してください。");
-      return;
-    }
-    if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
-      setError("個数は1以上の整数で入力してください。");
+  const addOrderFromMenu = (menuId: number) => {
+    const selected = MENU_ITEMS.find((item) => item.id === menuId);
+    if (!selected) {
       return;
     }
 
     const nextOrder: OrderMemo = {
       id: Date.now(),
-      drink: selectedMenuItem.name,
-      price: selectedMenuItem.price,
-      quantity: parsedQuantity,
-      customer: customer.trim(),
+      drink: selected.name,
+      price: selected.price,
+      quantity: 1,
+      customer: "",
       createdAt: new Date()
     };
-
     setOrders((prev) => [nextOrder, ...prev]);
-    setQuantity("1");
-    setCustomer("");
-    setError("");
   };
 
   const addVisitor = (event: FormEvent<HTMLFormElement>) => {
@@ -106,14 +85,16 @@ function App() {
   };
 
   const removeVisitor = (id: number) => {
+    const removed = visitors.find((visitor) => visitor.id === id);
     setVisitors((prev) => prev.filter((visitor) => visitor.id !== id));
-    setCustomer((prev) => {
-      const target = visitors.find((visitor) => visitor.id === id);
-      if (target && prev === target.name) {
-        return "";
-      }
-      return prev;
-    });
+    if (!removed) {
+      return;
+    }
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.customer === removed.name ? { ...order, customer: "" } : order
+      )
+    );
   };
 
   const removeOrder = (id: number) => {
@@ -128,87 +109,21 @@ function App() {
     );
   };
 
+  const updateOrderQuantity = (id: number, nextQuantity: number) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === id ? { ...order, quantity: nextQuantity } : order
+      )
+    );
+  };
+
   return (
     <main className="page">
       <section className="panel">
         <h1>バー注文メモ</h1>
         <p className="subtitle">
-          全メニューを一覧で見ながら選択して、注文メモを追加できます。
+          スマホではメモを先に確認し、必要時だけメニューを開いて追加します。
         </p>
-
-        <form className="form" onSubmit={handleSubmit}>
-          <div className="menu-browser">
-            {groupedMenu.map(([menuCategory, items]) => (
-              <section key={menuCategory} className="menu-category">
-                <h3>{menuCategory}</h3>
-                <div className="menu-items">
-                  {items.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`menu-item${
-                        selectedMenuId === item.id ? " active" : ""
-                      }`}
-                      onClick={() => setSelectedMenuId(item.id)}
-                    >
-                      <span>{item.name}</span>
-                      <small>{item.price}円</small>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-
-          <label>
-            個数
-            <select
-              value={quantity}
-              onChange={(event) => setQuantity(event.target.value)}
-            >
-              {QUANTITY_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            注文者（任意）
-            <select
-              value={customer}
-              onChange={(event) => setCustomer(event.target.value)}
-            >
-              <option value="">未選択</option>
-              {visitors.map((visitor) => (
-                <option key={visitor.id} value={visitor.name}>
-                  {visitor.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            type="button"
-            className="sub-button"
-            onClick={() => setIsVisitorModalOpen(true)}
-          >
-            来店者を管理
-          </button>
-
-          {error ? <p className="error">{error}</p> : null}
-          {selectedMenuItem ? (
-            <p className="subtitle">
-              選択中: {selectedMenuItem.category} / {selectedMenuItem.name} (
-              {selectedMenuItem.price}円)
-            </p>
-          ) : null}
-
-          <button type="submit">メモを追加</button>
-        </form>
-      </section>
-
-      <section className="panel">
         <h2>現在のメモ</h2>
         <p className="subtitle">
           {orders.length} 件 / 合計 {totalDrinks} 杯 / {totalAmount}円
@@ -226,6 +141,21 @@ function App() {
                     {order.quantity} 杯 ({order.price}円/杯) /{" "}
                     {order.customer || "注文者未入力"}
                   </p>
+                  <label className="order-customer-edit">
+                    個数を変更
+                    <select
+                      value={String(order.quantity)}
+                      onChange={(event) =>
+                        updateOrderQuantity(order.id, Number(event.target.value))
+                      }
+                    >
+                      {QUANTITY_OPTIONS.map((option) => (
+                        <option key={option} value={String(option)}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   <label className="order-customer-edit">
                     注文者を変更
                     <select
@@ -256,6 +186,69 @@ function App() {
           </ul>
         )}
       </section>
+      <footer className="fixed-footer">
+        <div className="fixed-footer-inner">
+          <button type="button" onClick={() => setIsMenuDrawerOpen(true)}>
+            メニューを開く
+          </button>
+          <button
+            type="button"
+            className="sub-button"
+            onClick={() => setIsVisitorModalOpen(true)}
+          >
+            来店者を管理
+          </button>
+        </div>
+      </footer>
+
+      {isMenuDrawerOpen ? (
+        <div
+          className="drawer-backdrop"
+          onClick={() => setIsMenuDrawerOpen(false)}
+        >
+          <section
+            className="drawer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>メニュー</h2>
+              <button
+                type="button"
+                className="sub-button"
+                onClick={() => setIsMenuDrawerOpen(false)}
+              >
+                閉じる
+              </button>
+            </div>
+            <p className="subtitle">
+              お酒をタップすると個数1・注文者未設定で追加されます。
+            </p>
+            <div className="menu-browser">
+              {groupedMenu.map(([menuCategory, items]) => (
+                <section key={menuCategory} className="menu-category">
+                  <h3>{menuCategory}</h3>
+                  <div className="menu-items">
+                    {items.map((item) => (
+                      <button
+                        key={item.id}
+                        type="button"
+                        className="menu-item"
+                        onClick={() => {
+                          addOrderFromMenu(item.id);
+                          setIsMenuDrawerOpen(false);
+                        }}
+                      >
+                        <span>{item.name}</span>
+                        <small>{item.price}円</small>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {isVisitorModalOpen ? (
         <div
