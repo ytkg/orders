@@ -9,15 +9,15 @@ type OrderMemo = {
 };
 
 const DRINK_OPTIONS = [
-  "Beer",
-  "Highball",
-  "Lemon Sour",
-  "Gin and tonic",
-  "Mojito",
-  "Whiskey",
-  "Red Wine",
-  "White Wine",
-  "Non-alcoholic"
+  "ビール",
+  "ハイボール",
+  "レモンサワー",
+  "ジントニック",
+  "モヒート",
+  "ウイスキー",
+  "赤ワイン",
+  "白ワイン",
+  "ノンアルコール"
 ];
 
 function App() {
@@ -37,11 +37,11 @@ function App() {
     const parsedQuantity = Number.parseInt(quantity, 10);
 
     if (!customer.trim()) {
-      setError("Customer is required.");
+      setError("注文者は必須です。");
       return;
     }
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
-      setError("Quantity must be a positive integer.");
+      setError("個数は1以上の整数で入力してください。");
       return;
     }
 
@@ -54,7 +54,7 @@ function App() {
     };
 
     setOrders((prev) => [nextOrder, ...prev]);
-    setDrink("");
+    setDrink(DRINK_OPTIONS[0]);
     setQuantity("1");
     setCustomer("");
     setError("");
@@ -67,12 +67,12 @@ function App() {
   return (
     <main className="page">
       <section className="panel">
-        <h1>Bar Order Memo</h1>
-        <p className="subtitle">Record drink, quantity, and customer on screen.</p>
+        <h1>バー注文メモ</h1>
+        <p className="subtitle">お酒の種類・個数・注文者を画面に記録します。</p>
 
         <form className="form" onSubmit={handleSubmit}>
           <label>
-            Drink
+            お酒
             <select
               value={drink}
               onChange={(event) => setDrink(event.target.value)}
@@ -86,7 +86,7 @@ function App() {
           </label>
 
           <label>
-            Quantity
+            個数
             <input
               type="number"
               min="1"
@@ -97,28 +97,28 @@ function App() {
           </label>
 
           <label>
-            Customer
+            注文者
             <input
               value={customer}
               onChange={(event) => setCustomer(event.target.value)}
-              placeholder="e.g. Seat A3"
+              placeholder="例: A3席"
             />
           </label>
 
           {error ? <p className="error">{error}</p> : null}
 
-          <button type="submit">Add Memo</button>
+          <button type="submit">メモを追加</button>
         </form>
       </section>
 
       <section className="panel">
-        <h2>Current Memos</h2>
+        <h2>現在のメモ</h2>
         <p className="subtitle">
-          {orders.length} memos / {totalDrinks} drinks
+          {orders.length} 件 / 合計 {totalDrinks} 杯
         </p>
 
         {orders.length === 0 ? (
-          <p className="empty">No memos yet.</p>
+          <p className="empty">まだメモはありません。</p>
         ) : (
           <ul className="orders">
             {orders.map((order) => (
@@ -126,7 +126,7 @@ function App() {
                 <div>
                   <strong>{order.drink}</strong>
                   <p>
-                    x{order.quantity} for {order.customer}
+                    {order.quantity} 杯 / {order.customer}
                   </p>
                   <small>{order.createdAt.toLocaleTimeString()}</small>
                 </div>
@@ -135,7 +135,7 @@ function App() {
                   className="remove"
                   onClick={() => removeOrder(order.id)}
                 >
-                  Remove
+                  削除
                 </button>
               </li>
             ))}
