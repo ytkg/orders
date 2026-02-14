@@ -102,6 +102,24 @@ button:hover {
   gap: 10px;
 }
 
+.visitors {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.visitor {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #d7dce3;
+  border-radius: 10px;
+}
+
 .order {
   display: flex;
   justify-content: space-between;

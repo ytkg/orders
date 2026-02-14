@@ -7,6 +7,10 @@ type OrderMemo = {
   customer: string;
   createdAt: Date;
 };
+type Visitor = {
+  id: number;
+  name: string;
+};
 
 const DRINK_OPTIONS = [
   "ビール",
@@ -27,8 +31,11 @@ function App() {
   const [drink, setDrink] = useState(DRINK_OPTIONS[0]);
   const [quantity, setQuantity] = useState("1");
   const [customer, setCustomer] = useState("");
+  const [newVisitorName, setNewVisitorName] = useState("");
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [orders, setOrders] = useState<OrderMemo[]>([]);
   const [error, setError] = useState("");
+  const [visitorError, setVisitorError] = useState("");
 
   const totalDrinks = useMemo(
     () => orders.reduce((sum, order) => sum + order.quantity, 0),
@@ -58,6 +65,37 @@ function App() {
     setCustomer("");
     setError("");
   };
+  const addVisitor = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const normalized = newVisitorName.trim();
+
+    if (!normalized) {
+      setVisitorError("来店者名を入力してください。");
+      return;
+    }
+    if (visitors.some((visitor) => visitor.name === normalized)) {
+      setVisitorError("同じ来店者名は登録できません。");
+      return;
+    }
+
+    const nextVisitor: Visitor = {
+      id: Date.now(),
+      name: normalized
+    };
+    setVisitors((prev) => [...prev, nextVisitor]);
+    setNewVisitorName("");
+    setVisitorError("");
+  };
+  const removeVisitor = (id: number) => {
+    setVisitors((prev) => prev.filter((visitor) => visitor.id !== id));
+    setCustomer((prev) => {
+      const target = visitors.find((visitor) => visitor.id === id);
+      if (target && prev === target.name) {
+        return "";
+      }
+      return prev;
+    });
+  };
 
   const removeOrder = (id: number) => {
     setOrders((prev) => prev.filter((order) => order.id !== id));
@@ -75,7 +113,7 @@ function App() {
       <section className="panel">
         <h1>バー注文メモ</h1>
         <p className="subtitle">
-          お酒の種類・個数をすばやく記録し、注文者は後から入力できます。
+          お酒の種類・個数をすばやく記録し、注文者は来店者から選択します。
         </p>
 
         <form className="form" onSubmit={handleSubmit}>
@@ -109,17 +147,58 @@ function App() {
 
           <label>
             注文者（任意）
-            <input
+            <select
               value={customer}
               onChange={(event) => setCustomer(event.target.value)}
-              placeholder="未入力でも追加できます"
-            />
+            >
+              <option value="">未選択</option>
+              {visitors.map((visitor) => (
+                <option key={visitor.id} value={visitor.name}>
+                  {visitor.name}
+                </option>
+              ))}
+            </select>
           </label>
 
           {error ? <p className="error">{error}</p> : null}
 
           <button type="submit">メモを追加</button>
         </form>
+      </section>
+
+      <section className="panel">
+        <h2>来店者（グループ）</h2>
+        <p className="subtitle">注文者候補を事前に登録します。</p>
+        <form className="form" onSubmit={addVisitor}>
+          <label>
+            来店者名
+            <input
+              value={newVisitorName}
+              onChange={(event) => setNewVisitorName(event.target.value)}
+              placeholder="例: A卓 / 田中さんグループ"
+            />
+          </label>
+          {visitorError ? <p className="error">{visitorError}</p> : null}
+          <button type="submit">来店者を追加</button>
+        </form>
+        {visitors.length === 0 ? (
+          <p className="empty">来店者はまだ登録されていません。</p>
+        ) : (
+          <ul className="visitors">
+            {visitors.map((visitor) => (
+              <li key={visitor.id} className="visitor">
+                <span>{visitor.name}</span>
+                <button
+                  type="button"
+                  className="remove"
+                  onClick={() => removeVisitor(visitor.id)}
+                >
+                  削除
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="panel">
@@ -140,14 +219,20 @@ function App() {
                     {order.quantity} 杯 / {order.customer || "注文者未入力"}
                   </p>
                   <label className="order-customer-edit">
-                    注文者を後入力
-                    <input
+                    注文者を変更
+                    <select
                       value={order.customer}
                       onChange={(event) =>
                         updateOrderCustomer(order.id, event.target.value)
                       }
-                      placeholder="例: A3席"
-                    />
+                    >
+                      <option value="">未選択</option>
+                      {visitors.map((visitor) => (
+                        <option key={visitor.id} value={visitor.name}>
+                          {visitor.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <small>{order.createdAt.toLocaleTimeString()}</small>
                 </div>
