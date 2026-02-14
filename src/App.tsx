@@ -118,12 +118,14 @@ function App() {
   };
 
   return (
-    <main className="page">
+    <>
+      <header className="fixed-header">
+        <div className="fixed-header-inner">
+          <h1>バー注文メモ</h1>
+        </div>
+      </header>
+      <main className="page">
       <section className="panel">
-        <h1>バー注文メモ</h1>
-        <p className="subtitle">
-          スマホではメモを先に確認し、必要時だけメニューを開いて追加します。
-        </p>
         <h2>現在のメモ</h2>
         <p className="subtitle">
           {orders.length} 件 / 合計 {totalDrinks} 杯 / {totalAmount}円
@@ -300,7 +302,8 @@ function App() {
           </section>
         </div>
       ) : null}
-    </main>
+      </main>
+    </>
   );
 }
 
