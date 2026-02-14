@@ -61,6 +61,14 @@ input {
   font-size: 15px;
 }
 
+select {
+  border: 1px solid #bbc4cf;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 15px;
+  background: #fff;
+}
+
 button {
   border: none;
   border-radius: 8px;

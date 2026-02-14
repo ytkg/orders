@@ -8,8 +8,20 @@ type OrderMemo = {
   createdAt: Date;
 };
 
+const DRINK_OPTIONS = [
+  "Beer",
+  "Highball",
+  "Lemon Sour",
+  "Gin and tonic",
+  "Mojito",
+  "Whiskey",
+  "Red Wine",
+  "White Wine",
+  "Non-alcoholic"
+];
+
 function App() {
-  const [drink, setDrink] = useState("");
+  const [drink, setDrink] = useState(DRINK_OPTIONS[0]);
   const [quantity, setQuantity] = useState("1");
   const [customer, setCustomer] = useState("");
   const [orders, setOrders] = useState<OrderMemo[]>([]);
@@ -24,8 +36,8 @@ function App() {
     event.preventDefault();
     const parsedQuantity = Number.parseInt(quantity, 10);
 
-    if (!drink.trim() || !customer.trim()) {
-      setError("Drink and customer are required.");
+    if (!customer.trim()) {
+      setError("Customer is required.");
       return;
     }
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
@@ -35,7 +47,7 @@ function App() {
 
     const nextOrder: OrderMemo = {
       id: Date.now(),
-      drink: drink.trim(),
+      drink,
       quantity: parsedQuantity,
       customer: customer.trim(),
       createdAt: new Date()
@@ -61,11 +73,16 @@ function App() {
         <form className="form" onSubmit={handleSubmit}>
           <label>
             Drink
-            <input
+            <select
               value={drink}
               onChange={(event) => setDrink(event.target.value)}
-              placeholder="e.g. Gin and tonic"
-            />
+            >
+              {DRINK_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label>
