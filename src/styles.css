@@ -90,6 +90,10 @@ h2 {
   flex: 1;
 }
 
+.confirm-button {
+  background: #0f766e;
+}
+
 .menu-browser {
   display: grid;
   gap: 8px;
@@ -209,7 +213,15 @@ button:disabled {
   margin: 12px 0 0;
   padding: 0;
   display: grid;
-  gap: 10px;
+  gap: 5px;
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+}
+
+@media (min-width: 900px) {
+  .orders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .visitors {
@@ -233,65 +245,85 @@ button:disabled {
 .order {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 12px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
   border: 1px solid #d7dce3;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
-.order > div {
+.order-main {
   flex: 1;
   min-width: 0;
 }
 
-.order p,
-.order small {
-  margin: 0;
-}
-
-.order-customer-edit {
-  margin-top: 8px;
-}
-
-.order-customer-edit input,
-.order-customer-edit select {
-  margin-top: 4px;
-}
-
-.quantity-controls {
-  margin-top: 4px;
-  display: grid;
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   gap: 8px;
+}
+
+.order-head strong {
+  font-size: 13px;
+}
+
+.order-sum {
+  font-size: 12px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.order-meta {
+  margin: 1px 0 4px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.order-controls {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px;
+  align-items: center;
 }
 
 .stepper {
   display: grid;
-  grid-template-columns: 44px 1fr 44px;
+  grid-template-columns: 32px 40px 32px;
   align-items: center;
-  gap: 6px;
+  gap: 3px;
 }
 
 .stepper-button {
-  min-height: 44px;
+  min-height: 32px;
   padding: 0;
-  font-size: 20px;
+  font-size: 16px;
   line-height: 1;
 }
 
 .stepper-value {
-  min-height: 44px;
+  min-height: 32px;
   border: 1px solid #c8d0da;
   border-radius: 8px;
   display: grid;
   place-items: center;
   font-weight: 700;
   background: #fff;
+  font-size: 13px;
+}
+
+.order-controls select {
+  min-height: 32px;
+  padding: 6px 8px;
+  font-size: 12px;
 }
 
 .remove {
   background: #e5e7eb;
   color: #1f2937;
+  padding: 6px 8px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .modal-backdrop {
@@ -339,4 +371,53 @@ button:disabled {
   border-top-right-radius: 14px;
   border: 1px solid #d7dce3;
   padding: 14px;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: grid;
+  place-items: center;
+  z-index: 35;
+  padding: 12px;
+}
+
+.confirm-view {
+  width: min(980px, 100%);
+  max-height: calc(100vh - 24px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #d7dce3;
+  padding: 12px;
+}
+
+.confirmed-orders {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.confirmed-order {
+  border: 1px solid #d7dce3;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.confirmed-order p,
+.confirmed-order small {
+  margin: 2px 0 0;
+}
+
+.confirm-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.confirm-actions > button {
+  flex: 1;
 }

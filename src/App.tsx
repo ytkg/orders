@@ -9,6 +9,9 @@ type OrderMemo = {
   customer: string;
   createdAt: Date;
 };
+type ConfirmedOrder = OrderMemo & {
+  confirmedAt: Date;
+};
 
 type Visitor = {
   id: number;
@@ -22,8 +25,10 @@ function App() {
   const [newVisitorName, setNewVisitorName] = useState("");
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
+  const [isConfirmedViewOpen, setIsConfirmedViewOpen] = useState(false);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [orders, setOrders] = useState<OrderMemo[]>([]);
+  const [confirmedOrders, setConfirmedOrders] = useState<ConfirmedOrder[]>([]);
   const [visitorError, setVisitorError] = useState("");
   const holdStartTimeoutRef = useRef<Map<number, number>>(new Map());
   const holdIntervalRef = useRef<Map<number, number>>(new Map());
@@ -46,6 +51,15 @@ function App() {
   const totalAmount = useMemo(
     () => orders.reduce((sum, order) => sum + order.quantity * order.price, 0),
     [orders]
+  );
+  const confirmedTotalDrinks = useMemo(
+    () => confirmedOrders.reduce((sum, order) => sum + order.quantity, 0),
+    [confirmedOrders]
+  );
+  const confirmedTotalAmount = useMemo(
+    () =>
+      confirmedOrders.reduce((sum, order) => sum + order.quantity * order.price, 0),
+    [confirmedOrders]
   );
 
   const addOrderFromMenu = (menuId: number) => {
@@ -120,6 +134,28 @@ function App() {
         order.id === id ? { ...order, quantity: clamped } : order
       )
     );
+  };
+  const confirmAllOrders = () => {
+    if (orders.length === 0) {
+      return;
+    }
+    const confirmedAt = new Date();
+    const nextConfirmed = orders.map((order) => ({
+      ...order,
+      confirmedAt
+    }));
+    setConfirmedOrders(nextConfirmed);
+    setIsConfirmedViewOpen(true);
+  };
+  const resetDraftOrders = () => {
+    if (orders.length === 0) {
+      return;
+    }
+    const shouldReset = window.confirm("メモをリセットします。よろしいですか？");
+    if (!shouldReset) {
+      return;
+    }
+    setOrders([]);
   };
   const incrementOrderQuantity = (id: number, delta: number) => {
     let reachedMax = false;
@@ -213,59 +249,59 @@ function App() {
           <ul className="orders">
             {orders.map((order) => (
               <li key={order.id} className="order">
-                <div>
-                  <strong>{order.drink}</strong>
-                  <p>
-                    {order.quantity} 杯 ({order.price}円/杯) /{" "}
-                    {order.customer || "注文者未入力"}
+                <div className="order-main">
+                  <div className="order-head">
+                    <strong>{order.drink}</strong>
+                    <span className="order-sum">
+                      {order.quantity * order.price}円
+                    </span>
+                  </div>
+                  <p className="order-meta">
+                    {order.quantity}杯 x {order.price}円 /{" "}
+                    {order.customer || "注文者未入力"} /{" "}
+                    {order.createdAt.toLocaleTimeString()}
                   </p>
-                  <label className="order-customer-edit">
-                    個数を変更
-                    <div className="quantity-controls">
-                      <div className="stepper" role="group" aria-label="個数ステッパー">
-                        <button
-                          type="button"
-                          className="stepper-button"
-                          aria-label="個数を1減らす"
-                          onClick={() => incrementOrderQuantity(order.id, -1)}
-                        >
-                          -
-                        </button>
-                        <span className="stepper-value" aria-live="polite">
-                          {order.quantity}
-                        </span>
-                        <button
-                          type="button"
-                          className="stepper-button"
-                          aria-label="個数を1増やす"
-                          onClick={() => handlePlusClick(order.id)}
-                          onPointerDown={() => handlePlusPointerDown(order.id)}
-                          onPointerUp={() => handlePlusPointerStop(order.id)}
-                          onPointerCancel={() => handlePlusPointerStop(order.id)}
-                          onPointerLeave={() => handlePlusPointerStop(order.id)}
-                        >
-                          +
-                        </button>
-                      </div>
+                  <div className="order-controls">
+                    <div className="stepper" role="group" aria-label="個数ステッパー">
+                      <button
+                        type="button"
+                        className="stepper-button"
+                        aria-label="個数を1減らす"
+                        onClick={() => incrementOrderQuantity(order.id, -1)}
+                      >
+                        -
+                      </button>
+                      <span className="stepper-value" aria-live="polite">
+                        {order.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        className="stepper-button"
+                        aria-label="個数を1増やす"
+                        onClick={() => handlePlusClick(order.id)}
+                        onPointerDown={() => handlePlusPointerDown(order.id)}
+                        onPointerUp={() => handlePlusPointerStop(order.id)}
+                        onPointerCancel={() => handlePlusPointerStop(order.id)}
+                        onPointerLeave={() => handlePlusPointerStop(order.id)}
+                      >
+                        +
+                      </button>
                     </div>
-                  </label>
-                  <label className="order-customer-edit">
-                    注文者を変更
                     <select
+                      aria-label="注文者を選択"
                       value={order.customer}
                       onChange={(event) =>
                         updateOrderCustomer(order.id, event.target.value)
                       }
                     >
-                      <option value="">未選択</option>
+                      <option value="">注文者</option>
                       {visitors.map((visitor) => (
                         <option key={visitor.id} value={visitor.name}>
                           {visitor.name}
                         </option>
                       ))}
                     </select>
-                  </label>
-                  <small>{order.createdAt.toLocaleTimeString()}</small>
+                  </div>
                 </div>
                 <button
                   type="button"
@@ -281,8 +317,24 @@ function App() {
       </section>
       <footer className="fixed-footer">
         <div className="fixed-footer-inner">
+          <button
+            type="button"
+            className="confirm-button"
+            disabled={orders.length === 0}
+            onClick={confirmAllOrders}
+          >
+            確認
+          </button>
           <button type="button" onClick={() => setIsMenuDrawerOpen(true)}>
             メニューを開く
+          </button>
+          <button
+            type="button"
+            className="sub-button"
+            disabled={orders.length === 0}
+            onClick={resetDraftOrders}
+          >
+            メモをリセット
           </button>
           <button
             type="button"
@@ -390,6 +442,55 @@ function App() {
                 ))}
               </ul>
             )}
+          </section>
+        </div>
+      ) : null}
+      {isConfirmedViewOpen ? (
+        <div
+          className="confirm-backdrop"
+          onClick={() => setIsConfirmedViewOpen(false)}
+        >
+          <section
+            className="confirm-view"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h2>確定オーダー</h2>
+              <button
+                type="button"
+                className="sub-button"
+                onClick={() => setIsConfirmedViewOpen(false)}
+              >
+                閉じる
+              </button>
+            </div>
+            <p className="subtitle">
+              {confirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯 /{" "}
+              {confirmedTotalAmount}円
+            </p>
+            {confirmedOrders.length === 0 ? (
+              <p className="empty">確定済みオーダーはありません。</p>
+            ) : (
+              <ul className="confirmed-orders">
+                {confirmedOrders.map((order) => (
+                  <li key={order.id} className="confirmed-order">
+                    <strong>{order.drink}</strong>
+                    <p>
+                      {order.quantity}杯 / {order.customer || "注文者未入力"}
+                    </p>
+                    <small>
+                      {order.quantity * order.price}円 / 確定{" "}
+                      {order.confirmedAt.toLocaleTimeString()}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="confirm-actions">
+              <button type="button" onClick={() => setIsConfirmedViewOpen(false)}>
+                通常表示へ戻る
+              </button>
+            </div>
           </section>
         </div>
       ) : null}
