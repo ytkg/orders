@@ -18,7 +18,7 @@ body {
   width: min(980px, 100%);
   margin: 0 auto;
   min-height: 100vh;
-  padding: 86px 16px 96px;
+  padding: 96px 16px 96px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -38,11 +38,34 @@ body {
   width: min(980px, 100%);
   margin: 0 auto;
   padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .fixed-header h1 {
   margin: 0;
   font-size: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+@media (max-width: 720px) {
+  .fixed-header-inner {
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions > button {
+    flex: 1;
+  }
 }
 
 .panel {
@@ -353,24 +376,9 @@ button:disabled {
   gap: 12px;
 }
 
-.drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: grid;
-  place-items: end center;
-  z-index: 20;
-}
-
-.drawer {
+.menu-modal {
   width: min(980px, 100%);
-  height: min(92vh, 900px);
-  overflow: auto;
-  background: #fff;
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
-  border: 1px solid #d7dce3;
-  padding: 14px;
+  max-height: calc(100vh - 32px);
 }
 
 .confirm-backdrop {

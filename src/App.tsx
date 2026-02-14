@@ -234,6 +234,18 @@ function App() {
       <header className="fixed-header">
         <div className="fixed-header-inner">
           <h1>バー注文メモ</h1>
+          <div className="header-actions">
+            <button type="button" onClick={() => setIsMenuDrawerOpen(true)}>
+              メニューを開く
+            </button>
+            <button
+              type="button"
+              className="sub-button"
+              onClick={() => setIsVisitorModalOpen(true)}
+            >
+              来店者を管理
+            </button>
+          </div>
         </div>
       </header>
       <main className="page">
@@ -325,9 +337,6 @@ function App() {
           >
             確認
           </button>
-          <button type="button" onClick={() => setIsMenuDrawerOpen(true)}>
-            メニューを開く
-          </button>
           <button
             type="button"
             className="sub-button"
@@ -336,23 +345,16 @@ function App() {
           >
             メモをリセット
           </button>
-          <button
-            type="button"
-            className="sub-button"
-            onClick={() => setIsVisitorModalOpen(true)}
-          >
-            来店者を管理
-          </button>
         </div>
       </footer>
 
       {isMenuDrawerOpen ? (
         <div
-          className="drawer-backdrop"
+          className="modal-backdrop"
           onClick={() => setIsMenuDrawerOpen(false)}
         >
           <section
-            className="drawer"
+            className="modal menu-modal"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="modal-header">
