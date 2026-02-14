@@ -49,17 +49,8 @@ function App() {
     () => orders.reduce((sum, order) => sum + order.quantity, 0),
     [orders]
   );
-  const totalAmount = useMemo(
-    () => orders.reduce((sum, order) => sum + order.quantity * order.price, 0),
-    [orders]
-  );
   const confirmedTotalDrinks = useMemo(
     () => confirmedOrders.reduce((sum, order) => sum + order.quantity, 0),
-    [confirmedOrders]
-  );
-  const confirmedTotalAmount = useMemo(
-    () =>
-      confirmedOrders.reduce((sum, order) => sum + order.quantity * order.price, 0),
     [confirmedOrders]
   );
 
@@ -252,9 +243,7 @@ function App() {
       <main className="page">
       <section className="panel">
         <h2>現在のメモ</h2>
-        <p className="subtitle">
-          {orders.length} 件 / 合計 {totalDrinks} 杯 / {totalAmount}円
-        </p>
+        <p className="subtitle">{orders.length} 件 / 合計 {totalDrinks} 杯</p>
 
         {orders.length === 0 ? (
           <p className="empty">まだメモはありません。</p>
@@ -265,14 +254,9 @@ function App() {
                 <div className="order-main">
                   <div className="order-head">
                     <strong>{order.drink}</strong>
-                    <span className="order-sum">
-                      {order.quantity * order.price}円
-                    </span>
                   </div>
                   <p className="order-meta">
-                    {order.quantity}杯 x {order.price}円 /{" "}
-                    {order.customer || "注文者未入力"} /{" "}
-                    {order.createdAt.toLocaleTimeString()}
+                    {order.quantity}杯 / {order.customer || "注文者未入力"}
                   </p>
                   <div className="order-controls">
                     <div className="stepper" role="group" aria-label="個数ステッパー">
@@ -477,8 +461,7 @@ function App() {
               </Button>
             </div>
             <p className="subtitle">
-              {confirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯 /{" "}
-              {confirmedTotalAmount}円
+              {confirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯
             </p>
             {confirmedOrders.length === 0 ? (
               <p className="empty">確定済みオーダーはありません。</p>
@@ -490,10 +473,6 @@ function App() {
                     <p>
                       {order.quantity}杯 / {order.customer || "注文者未入力"}
                     </p>
-                    <small>
-                      {order.quantity * order.price}円 / 確定{" "}
-                      {order.confirmedAt.toLocaleTimeString()}
-                    </small>
                   </li>
                 ))}
               </ul>
