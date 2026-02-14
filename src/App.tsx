@@ -39,10 +39,6 @@ function App() {
     event.preventDefault();
     const parsedQuantity = Number.parseInt(quantity, 10);
 
-    if (!customer.trim()) {
-      setError("注文者は必須です。");
-      return;
-    }
     if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
       setError("個数は1以上の整数で入力してください。");
       return;
@@ -66,12 +62,21 @@ function App() {
   const removeOrder = (id: number) => {
     setOrders((prev) => prev.filter((order) => order.id !== id));
   };
+  const updateOrderCustomer = (id: number, nextCustomer: string) => {
+    setOrders((prev) =>
+      prev.map((order) =>
+        order.id === id ? { ...order, customer: nextCustomer } : order
+      )
+    );
+  };
 
   return (
     <main className="page">
       <section className="panel">
         <h1>バー注文メモ</h1>
-        <p className="subtitle">お酒の種類・個数・注文者を画面に記録します。</p>
+        <p className="subtitle">
+          お酒の種類・個数をすばやく記録し、注文者は後から入力できます。
+        </p>
 
         <form className="form" onSubmit={handleSubmit}>
           <label>
@@ -103,11 +108,11 @@ function App() {
           </label>
 
           <label>
-            注文者
+            注文者（任意）
             <input
               value={customer}
               onChange={(event) => setCustomer(event.target.value)}
-              placeholder="例: A3席"
+              placeholder="未入力でも追加できます"
             />
           </label>
 
@@ -132,8 +137,18 @@ function App() {
                 <div>
                   <strong>{order.drink}</strong>
                   <p>
-                    {order.quantity} 杯 / {order.customer}
+                    {order.quantity} 杯 / {order.customer || "注文者未入力"}
                   </p>
+                  <label className="order-customer-edit">
+                    注文者を後入力
+                    <input
+                      value={order.customer}
+                      onChange={(event) =>
+                        updateOrderCustomer(order.id, event.target.value)
+                      }
+                      placeholder="例: A3席"
+                    />
+                  </label>
                   <small>{order.createdAt.toLocaleTimeString()}</small>
                 </div>
                 <button

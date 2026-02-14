@@ -117,6 +117,14 @@ button:hover {
   margin: 0;
 }
 
+.order-customer-edit {
+  margin-top: 8px;
+}
+
+.order-customer-edit input {
+  margin-top: 4px;
+}
+
 .remove {
   background: #e5e7eb;
   color: #1f2937;
