@@ -24,6 +24,7 @@ function App() {
   const [quantity, setQuantity] = useState("1");
   const [customer, setCustomer] = useState("");
   const [newVisitorName, setNewVisitorName] = useState("");
+  const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
   const [visitors, setVisitors] = useState<Visitor[]>([]);
   const [orders, setOrders] = useState<OrderMemo[]>([]);
   const [error, setError] = useState("");
@@ -101,6 +102,7 @@ function App() {
     setVisitors((prev) => [...prev, nextVisitor]);
     setNewVisitorName("");
     setVisitorError("");
+    setIsVisitorModalOpen(true);
   };
 
   const removeVisitor = (id: number) => {
@@ -186,6 +188,13 @@ function App() {
               ))}
             </select>
           </label>
+          <button
+            type="button"
+            className="sub-button"
+            onClick={() => setIsVisitorModalOpen(true)}
+          >
+            来店者を管理
+          </button>
 
           {error ? <p className="error">{error}</p> : null}
           {selectedMenuItem ? (
@@ -197,41 +206,6 @@ function App() {
 
           <button type="submit">メモを追加</button>
         </form>
-      </section>
-
-      <section className="panel">
-        <h2>来店者（グループ）</h2>
-        <p className="subtitle">注文者候補を事前に登録します。</p>
-        <form className="form" onSubmit={addVisitor}>
-          <label>
-            来店者名
-            <input
-              value={newVisitorName}
-              onChange={(event) => setNewVisitorName(event.target.value)}
-              placeholder="例: A卓 / 田中さんグループ"
-            />
-          </label>
-          {visitorError ? <p className="error">{visitorError}</p> : null}
-          <button type="submit">来店者を追加</button>
-        </form>
-        {visitors.length === 0 ? (
-          <p className="empty">来店者はまだ登録されていません。</p>
-        ) : (
-          <ul className="visitors">
-            {visitors.map((visitor) => (
-              <li key={visitor.id} className="visitor">
-                <span>{visitor.name}</span>
-                <button
-                  type="button"
-                  className="remove"
-                  onClick={() => removeVisitor(visitor.id)}
-                >
-                  削除
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
       </section>
 
       <section className="panel">
@@ -282,6 +256,57 @@ function App() {
           </ul>
         )}
       </section>
+
+      {isVisitorModalOpen ? (
+        <div
+          className="modal-backdrop"
+          onClick={() => setIsVisitorModalOpen(false)}
+        >
+          <section className="modal" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h2>来店者（グループ）管理</h2>
+              <button
+                type="button"
+                className="sub-button"
+                onClick={() => setIsVisitorModalOpen(false)}
+              >
+                閉じる
+              </button>
+            </div>
+            <p className="subtitle">注文者候補を追加・削除できます。</p>
+            <form className="form" onSubmit={addVisitor}>
+              <label>
+                来店者名
+                <input
+                  value={newVisitorName}
+                  onChange={(event) => setNewVisitorName(event.target.value)}
+                  placeholder="例: A卓 / 田中さんグループ"
+                />
+              </label>
+              {visitorError ? <p className="error">{visitorError}</p> : null}
+              <button type="submit">来店者を追加</button>
+            </form>
+            {visitors.length === 0 ? (
+              <p className="empty">来店者はまだ登録されていません。</p>
+            ) : (
+              <ul className="visitors">
+                {visitors.map((visitor) => (
+                  <li key={visitor.id} className="visitor">
+                    <span>{visitor.name}</span>
+                    <button
+                      type="button"
+                      className="remove"
+                      onClick={() => removeVisitor(visitor.id)}
+                    >
+                      削除
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        </div>
+      ) : null}
     </main>
   );
 }
