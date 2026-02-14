@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Button, MenuItem, Select, TextField } from "@mui/material";
 import { MENU_ITEMS } from "./menu";
 
 type OrderMemo = {
@@ -235,16 +236,16 @@ function App() {
         <div className="fixed-header-inner">
           <h1>バー注文メモ</h1>
           <div className="header-actions">
-            <button type="button" onClick={() => setIsMenuDrawerOpen(true)}>
+            <Button variant="contained" onClick={() => setIsMenuDrawerOpen(true)}>
               メニューを開く
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outlined"
               className="sub-button"
               onClick={() => setIsVisitorModalOpen(true)}
             >
               来店者を管理
-            </button>
+            </Button>
           </div>
         </div>
       </header>
@@ -299,29 +300,34 @@ function App() {
                         +
                       </button>
                     </div>
-                    <select
+                    <Select
+                      size="small"
+                      displayEmpty
                       aria-label="注文者を選択"
                       value={order.customer}
+                      renderValue={(value) =>
+                        value ? (value as string) : "未選択"
+                      }
                       onChange={(event) =>
-                        updateOrderCustomer(order.id, event.target.value)
+                        updateOrderCustomer(order.id, event.target.value as string)
                       }
                     >
-                      <option value="">注文者</option>
+                      <MenuItem value="">未選択</MenuItem>
                       {visitors.map((visitor) => (
-                        <option key={visitor.id} value={visitor.name}>
+                        <MenuItem key={visitor.id} value={visitor.name}>
                           {visitor.name}
-                        </option>
+                        </MenuItem>
                       ))}
-                    </select>
+                    </Select>
                   </div>
                 </div>
-                <button
-                  type="button"
+                <Button
+                  variant="outlined"
                   className="remove"
                   onClick={() => removeOrder(order.id)}
                 >
                   削除
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
@@ -329,22 +335,22 @@ function App() {
       </section>
       <footer className="fixed-footer">
         <div className="fixed-footer-inner">
-          <button
-            type="button"
+          <Button
+            variant="contained"
             className="confirm-button"
             disabled={orders.length === 0}
             onClick={confirmAllOrders}
           >
             確認
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outlined"
             className="sub-button"
             disabled={orders.length === 0}
             onClick={resetDraftOrders}
           >
             メモをリセット
-          </button>
+          </Button>
         </div>
       </footer>
 
@@ -359,13 +365,13 @@ function App() {
           >
             <div className="modal-header">
               <h2>メニュー</h2>
-              <button
-                type="button"
+              <Button
+                variant="outlined"
                 className="sub-button"
                 onClick={() => setIsMenuDrawerOpen(false)}
               >
                 閉じる
-              </button>
+              </Button>
             </div>
             <p className="subtitle">
               お酒をタップすると個数1・注文者未設定で追加されます。
@@ -376,9 +382,9 @@ function App() {
                   <h3>{menuCategory}</h3>
                   <div className="menu-items">
                     {items.map((item) => (
-                      <button
+                      <Button
                         key={item.id}
-                        type="button"
+                        variant="outlined"
                         className="menu-item"
                         onClick={() => {
                           addOrderFromMenu(item.id);
@@ -387,7 +393,7 @@ function App() {
                       >
                         <span>{item.name}</span>
                         <small>{item.price}円</small>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </section>
@@ -405,26 +411,29 @@ function App() {
           <section className="modal" onClick={(event) => event.stopPropagation()}>
             <div className="modal-header">
               <h2>来店者（グループ）管理</h2>
-              <button
-                type="button"
+              <Button
+                variant="outlined"
                 className="sub-button"
                 onClick={() => setIsVisitorModalOpen(false)}
               >
                 閉じる
-              </button>
+              </Button>
             </div>
             <p className="subtitle">注文者候補を追加・削除できます。</p>
             <form className="form" onSubmit={addVisitor}>
               <label>
                 来店者名
-                <input
+                <TextField
+                  size="small"
                   value={newVisitorName}
                   onChange={(event) => setNewVisitorName(event.target.value)}
                   placeholder="例: A卓 / 田中さんグループ"
                 />
               </label>
               {visitorError ? <p className="error">{visitorError}</p> : null}
-              <button type="submit">来店者を追加</button>
+              <Button type="submit" variant="contained">
+                来店者を追加
+              </Button>
             </form>
             {visitors.length === 0 ? (
               <p className="empty">来店者はまだ登録されていません。</p>
@@ -433,13 +442,13 @@ function App() {
                 {visitors.map((visitor) => (
                   <li key={visitor.id} className="visitor">
                     <span>{visitor.name}</span>
-                    <button
-                      type="button"
+                    <Button
+                      variant="outlined"
                       className="remove"
                       onClick={() => removeVisitor(visitor.id)}
                     >
                       削除
-                    </button>
+                    </Button>
                   </li>
                 ))}
               </ul>
@@ -458,13 +467,13 @@ function App() {
           >
             <div className="modal-header">
               <h2>確定オーダー</h2>
-              <button
-                type="button"
+              <Button
+                variant="outlined"
                 className="sub-button"
                 onClick={() => setIsConfirmedViewOpen(false)}
               >
                 閉じる
-              </button>
+              </Button>
             </div>
             <p className="subtitle">
               {confirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯 /{" "}
@@ -489,9 +498,9 @@ function App() {
               </ul>
             )}
             <div className="confirm-actions">
-              <button type="button" onClick={() => setIsConfirmedViewOpen(false)}>
+              <Button variant="contained" onClick={() => setIsConfirmedViewOpen(false)}>
                 通常表示へ戻る
-              </button>
+              </Button>
             </div>
           </section>
         </div>
