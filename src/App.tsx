@@ -305,6 +305,7 @@ function App() {
                       displayEmpty
                       aria-label="注文者を選択"
                       value={order.customer}
+                      sx={{ width: "100%", minWidth: 0 }}
                       renderValue={(value) =>
                         value ? (value as string) : "未選択"
                       }

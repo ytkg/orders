@@ -239,6 +239,7 @@ button:disabled {
   gap: 5px;
   max-height: calc(100vh - 250px);
   overflow: auto;
+  overflow-x: hidden;
 }
 
 @media (min-width: 900px) {
@@ -273,6 +274,7 @@ button:disabled {
   padding: 6px 8px;
   border: 1px solid #d7dce3;
   border-radius: 8px;
+  min-width: 0;
 }
 
 .order-main {
@@ -305,9 +307,10 @@ button:disabled {
 
 .order-controls {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 6px;
   align-items: center;
+  min-width: 0;
 }
 
 .stepper {
@@ -341,12 +344,19 @@ button:disabled {
   font-size: 12px;
 }
 
+.order-controls .MuiSelect-select {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .remove {
   background: #e5e7eb;
   color: #1f2937;
   padding: 6px 8px;
   font-size: 11px;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .modal-backdrop {
