@@ -3,7 +3,6 @@
   line-height: 1.5;
   font-weight: 400;
   color: #171717;
-  background: #f4f5f7;
 }
 
 * {
@@ -11,6 +10,12 @@
 }
 
 body {
+  margin: 0;
+  background: #f4f5f7;
+}
+
+h1,
+h2 {
   margin: 0;
 }
 
@@ -63,7 +68,7 @@ body {
     width: 100%;
   }
 
-  .header-actions > button {
+  .header-actions > .MuiButton-root {
     flex: 1;
   }
 }
@@ -75,11 +80,6 @@ body {
   padding: 16px;
 }
 
-h1,
-h2 {
-  margin: 0;
-}
-
 .subtitle {
   margin: 6px 0 0;
   color: #4e5968;
@@ -89,6 +89,13 @@ h2 {
   margin-top: 16px;
   display: grid;
   gap: 12px;
+}
+
+.visitor-form-label {
+  display: grid;
+  gap: 6px;
+  font-size: 14px;
+  color: #2d3748;
 }
 
 .fixed-footer {
@@ -109,18 +116,30 @@ h2 {
   gap: 8px;
 }
 
-.fixed-footer-inner > button {
+.fixed-footer-inner > .MuiButton-root {
   flex: 1;
 }
 
 .confirm-button {
-  background: #0f766e;
+  background: #0f766e !important;
+}
+
+.sub-button {
+  border: 1px solid #9aa4b2 !important;
+  background: #f8fafc !important;
+  color: #1f2937 !important;
+}
+
+.sub-button:hover {
+  background: #eef2f7 !important;
+  opacity: 1;
 }
 
 .menu-browser {
+  margin-top: 8px;
   display: grid;
   gap: 8px;
-  max-height: calc(100vh - 170px);
+  max-height: calc(100vh - 240px);
   overflow: auto;
   border: 1px solid #d7dce3;
   border-radius: 10px;
@@ -141,84 +160,23 @@ h2 {
 }
 
 .menu-item {
-  border: 1px solid #c8d0da;
-  border-radius: 8px;
-  background: #fff;
-  color: #1f2937;
-  text-align: left;
-  padding: 6px 8px;
-  display: grid;
+  border: 1px solid #c8d0da !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #1f2937 !important;
+  text-align: left !important;
+  text-transform: none !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  padding: 6px 8px !important;
+  display: grid !important;
   gap: 1px;
-  font-size: 13px;
+  font-size: 13px !important;
 }
 
 .menu-item small {
   color: #4b5563;
   font-size: 11px;
-}
-
-.menu-item.active {
-  border-color: #0f62fe;
-  background: #eef4ff;
-}
-
-label {
-  display: grid;
-  gap: 6px;
-  font-size: 14px;
-  color: #2d3748;
-  min-width: 0;
-}
-
-input {
-  border: 1px solid #bbc4cf;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 15px;
-  width: 100%;
-  min-width: 0;
-}
-
-select {
-  border: 1px solid #bbc4cf;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 15px;
-  background: #fff;
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-
-button {
-  border: none;
-  border-radius: 8px;
-  background: #0f62fe;
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 10px 12px;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.9;
-}
-
-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.sub-button {
-  border: 1px solid #9aa4b2;
-  background: #f8fafc;
-  color: #1f2937;
-}
-
-.sub-button:hover {
-  background: #eef2f7;
-  opacity: 1;
 }
 
 .error {
@@ -293,12 +251,6 @@ button:disabled {
   font-size: 13px;
 }
 
-.order-sum {
-  font-size: 12px;
-  font-weight: 700;
-  color: #334155;
-}
-
 .order-meta {
   margin: 1px 0 4px;
   font-size: 11px;
@@ -322,9 +274,19 @@ button:disabled {
 
 .stepper-button {
   min-height: 32px;
-  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #0f62fe;
+  color: #fff;
   font-size: 16px;
   line-height: 1;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.stepper-button:hover {
+  opacity: 0.9;
 }
 
 .stepper-value {
@@ -338,77 +300,42 @@ button:disabled {
   font-size: 13px;
 }
 
-.order-controls select {
+.order-customer-select {
   min-height: 32px;
+  border: 1px solid #bbc4cf;
+  border-radius: 8px;
   padding: 6px 8px;
   font-size: 12px;
-}
-
-.order-controls .MuiSelect-select {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  background: #fff;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .remove {
-  background: #e5e7eb;
-  color: #1f2937;
-  padding: 6px 8px;
-  font-size: 11px;
+  background: #e5e7eb !important;
+  color: #1f2937 !important;
+  border-color: #cbd5e1 !important;
+  padding: 6px 8px !important;
+  font-size: 11px !important;
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  z-index: 30;
-}
-
-.modal {
-  width: min(700px, 100%);
-  max-height: calc(100vh - 32px);
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #d7dce3;
-  border-radius: 12px;
-  padding: 16px;
-}
-
-.modal-header {
+.dialog-header {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
 }
 
-.menu-modal {
-  width: min(980px, 100%);
-  max-height: calc(100vh - 32px);
+.dialog-title-wrapper {
+  padding: 16px 24px 8px;
 }
 
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.5);
-  display: grid;
-  place-items: center;
-  z-index: 35;
-  padding: 12px;
-}
-
-.confirm-view {
-  width: min(980px, 100%);
-  max-height: calc(100vh - 24px);
-  overflow: auto;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #d7dce3;
-  padding: 12px;
+.dialog-title-text {
+  margin: 0;
+  font-size: 1.25rem;
 }
 
 .confirmed-orders {
@@ -428,14 +355,4 @@ button:disabled {
 .confirmed-order p,
 .confirmed-order small {
   margin: 2px 0 0;
-}
-
-.confirm-actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 8px;
-}
-
-.confirm-actions > button {
-  flex: 1;
 }
