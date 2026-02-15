@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Button, Grow, Snackbar } from "@mui/material";
 import { ConfirmedOrdersDialog } from "../features/confirmed/components/ConfirmedOrdersDialog";
 import { MenuDialog } from "../features/menu/components/MenuDialog";
@@ -37,10 +37,6 @@ function App() {
     resetDraftOrders,
     confirmAllOrders
   } = useOrderMemo();
-
-  const holdStartTimeoutRef = useRef<Map<string, number>>(new Map());
-  const holdIntervalRef = useRef<Map<string, number>>(new Map());
-  const suppressClickRef = useRef<Set<string>>(new Set());
 
   const groupedMenu = useMemo(() => groupMenuItemsByCategory(MENU_ITEMS), []);
 
@@ -81,58 +77,6 @@ function App() {
     clearOrdersByCustomer(removedVisitor.name);
   };
 
-  const clearIncrementTimers = (id: string) => {
-    const timeoutId = holdStartTimeoutRef.current.get(id);
-    if (timeoutId !== undefined) {
-      window.clearTimeout(timeoutId);
-      holdStartTimeoutRef.current.delete(id);
-    }
-
-    const intervalId = holdIntervalRef.current.get(id);
-    if (intervalId !== undefined) {
-      window.clearInterval(intervalId);
-      holdIntervalRef.current.delete(id);
-    }
-  };
-
-  const handlePlusPointerDown = (id: string) => {
-    clearIncrementTimers(id);
-
-    const timeoutId = window.setTimeout(() => {
-      suppressClickRef.current.add(id);
-
-      const reachedMaxAtStart = incrementOrderQuantity(id, 1);
-      if (reachedMaxAtStart) {
-        clearIncrementTimers(id);
-        return;
-      }
-
-      const intervalId = window.setInterval(() => {
-        const reachedMax = incrementOrderQuantity(id, 1);
-        if (reachedMax) {
-          clearIncrementTimers(id);
-        }
-      }, 100);
-
-      holdIntervalRef.current.set(id, intervalId);
-    }, 300);
-
-    holdStartTimeoutRef.current.set(id, timeoutId);
-  };
-
-  const handlePlusPointerStop = (id: string) => {
-    clearIncrementTimers(id);
-  };
-
-  const handlePlusClick = (id: string) => {
-    if (suppressClickRef.current.has(id)) {
-      suppressClickRef.current.delete(id);
-      return;
-    }
-
-    incrementOrderQuantity(id, 1);
-  };
-
   const handleResetDraftOrders = () => {
     if (orders.length === 0) {
       return;
@@ -151,17 +95,6 @@ function App() {
       setIsConfirmedDialogOpen(true);
     }
   };
-
-  useEffect(() => {
-    return () => {
-      holdStartTimeoutRef.current.forEach((timeoutId) => {
-        window.clearTimeout(timeoutId);
-      });
-      holdIntervalRef.current.forEach((intervalId) => {
-        window.clearInterval(intervalId);
-      });
-    };
-  }, []);
 
   useEffect(() => {
     writeVisitorsToCookie(visitors);
@@ -193,9 +126,7 @@ function App() {
           visitors={visitors}
           totalDrinks={totalDrinks}
           onDecrease={(id) => incrementOrderQuantity(id, -1)}
-          onIncreaseClick={handlePlusClick}
-          onIncreasePointerDown={handlePlusPointerDown}
-          onIncreasePointerStop={handlePlusPointerStop}
+          onIncrease={(id) => incrementOrderQuantity(id, 1)}
           onCustomerChange={updateOrderCustomer}
           onRemove={removeOrder}
         />

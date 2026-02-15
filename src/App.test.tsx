@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import App from "./App";
@@ -63,30 +63,21 @@ describe("App", () => {
     expect(within(row).getByText("2")).toBeInTheDocument();
   });
 
-  test("T4: 個数変更（長押し）", async () => {
+  test("T4: 個数変更（上限）", async () => {
     const user = userEvent.setup();
     render(<App />);
     await addOrderFromMenu(user);
     const row = getFirstOrderRow();
     const plusButton = within(row).getByRole("button", { name: "個数を1増やす" });
-    vi.useFakeTimers();
 
-    fireEvent.pointerDown(plusButton);
-    act(() => {
-      vi.advanceTimersByTime(700);
-    });
-    fireEvent.pointerUp(plusButton);
+    for (let i = 0; i < 120; i += 1) {
+      fireEvent.click(plusButton);
+    }
 
-    const quantityNode = row.querySelector(".stepper-value");
-    expect(quantityNode).not.toBeNull();
-    const quantityAfterHold = Number.parseInt(quantityNode!.textContent ?? "0", 10);
-    expect(quantityAfterHold).toBeGreaterThan(1);
+    expect(within(row).getByText("99")).toBeInTheDocument();
 
-    act(() => {
-      vi.advanceTimersByTime(500);
-    });
-    const quantityAfterStop = Number.parseInt(quantityNode!.textContent ?? "0", 10);
-    expect(quantityAfterStop).toBe(quantityAfterHold);
+    fireEvent.click(plusButton);
+    expect(within(row).getByText("99")).toBeInTheDocument();
   });
 
   test("T5: 注文者変更", async () => {

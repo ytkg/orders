@@ -7,9 +7,7 @@ type OrderListProps = {
   visitors: Visitor[];
   totalDrinks: number;
   onDecrease: (id: string) => void;
-  onIncreaseClick: (id: string) => void;
-  onIncreasePointerDown: (id: string) => void;
-  onIncreasePointerStop: (id: string) => void;
+  onIncrease: (id: string) => void;
   onCustomerChange: (id: string, customer: string) => void;
   onRemove: (id: string) => void;
 };
@@ -19,9 +17,7 @@ export function OrderList({
   visitors,
   totalDrinks,
   onDecrease,
-  onIncreaseClick,
-  onIncreasePointerDown,
-  onIncreasePointerStop,
+  onIncrease,
   onCustomerChange,
   onRemove
 }: OrderListProps) {
@@ -62,11 +58,7 @@ export function OrderList({
                       type="button"
                       className="stepper-button"
                       aria-label="個数を1増やす"
-                      onClick={() => onIncreaseClick(order.id)}
-                      onPointerDown={() => onIncreasePointerDown(order.id)}
-                      onPointerUp={() => onIncreasePointerStop(order.id)}
-                      onPointerCancel={() => onIncreasePointerStop(order.id)}
-                      onPointerLeave={() => onIncreasePointerStop(order.id)}
+                      onClick={() => onIncrease(order.id)}
                     >
                       +
                     </button>
