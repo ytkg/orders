@@ -148,4 +148,33 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "メモをリセット" }));
     expect(screen.getByText("まだメモはありません。")).toBeInTheDocument();
   });
+
+  test("T9: 確認画面で同一商品・同一注文者を合算表示", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "来店者を管理" }));
+    await user.type(screen.getByPlaceholderText("例: A卓 / 田中さんグループ"), "A卓");
+    await user.click(screen.getByRole("button", { name: "来店者を追加" }));
+    await user.click(screen.getByRole("button", { name: "閉じる" }));
+
+    await addOrderFromMenu(user);
+    await addOrderFromMenu(user);
+
+    const rows = screen.getAllByRole("listitem");
+    const firstSelect = within(rows[0]).getByRole("combobox");
+    await user.click(firstSelect);
+    await user.click(await screen.findByRole("option", { name: "A卓" }));
+
+    const secondSelect = within(rows[1]).getByRole("combobox");
+    await user.click(secondSelect);
+    await user.click(await screen.findByRole("option", { name: "A卓" }));
+
+    await user.click(screen.getByRole("button", { name: "確認" }));
+    const confirmView = screen.getByRole("heading", { name: "確定オーダー" }).closest("section");
+    expect(confirmView).not.toBeNull();
+    const scoped = within(confirmView as HTMLElement);
+    expect(scoped.getByText("1 件 / 合計 2 杯")).toBeInTheDocument();
+    expect(scoped.getByText("2杯 / A卓")).toBeInTheDocument();
+  });
 });

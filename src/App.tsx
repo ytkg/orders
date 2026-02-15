@@ -99,6 +99,23 @@ function App() {
     () => confirmedOrders.reduce((sum, order) => sum + order.quantity, 0),
     [confirmedOrders]
   );
+  const groupedConfirmedOrders = useMemo(() => {
+    const map = new Map<string, { drink: string; customer: string; quantity: number }>();
+    for (const order of confirmedOrders) {
+      const key = `${order.drink}__${order.customer}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.quantity += order.quantity;
+        continue;
+      }
+      map.set(key, {
+        drink: order.drink,
+        customer: order.customer,
+        quantity: order.quantity
+      });
+    }
+    return Array.from(map.values());
+  }, [confirmedOrders]);
 
   const addOrderFromMenu = (menuId: number) => {
     const selected = MENU_ITEMS.find((item) => item.id === menuId);
@@ -510,14 +527,17 @@ function App() {
               </Button>
             </div>
             <p className="subtitle">
-              {confirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯
+              {groupedConfirmedOrders.length} 件 / 合計 {confirmedTotalDrinks} 杯
             </p>
-            {confirmedOrders.length === 0 ? (
+            {groupedConfirmedOrders.length === 0 ? (
               <p className="empty">確定済みオーダーはありません。</p>
             ) : (
               <ul className="confirmed-orders">
-                {confirmedOrders.map((order) => (
-                  <li key={order.id} className="confirmed-order">
+                {groupedConfirmedOrders.map((order) => (
+                  <li
+                    key={`${order.drink}__${order.customer}`}
+                    className="confirmed-order"
+                  >
                     <strong>{order.drink}</strong>
                     <p>
                       {order.quantity}杯 / {order.customer || "注文者未入力"}
