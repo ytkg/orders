@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Button, MenuItem, Select, TextField } from "@mui/material";
+import { Button, Grow, MenuItem, Select, Snackbar, TextField } from "@mui/material";
 import { MENU_ITEMS } from "./menu";
 
 type OrderMemo = {
@@ -31,6 +31,9 @@ function App() {
   const [orders, setOrders] = useState<OrderMemo[]>([]);
   const [confirmedOrders, setConfirmedOrders] = useState<ConfirmedOrder[]>([]);
   const [visitorError, setVisitorError] = useState("");
+  const [addedNotice, setAddedNotice] = useState<{ id: number; name: string } | null>(
+    null
+  );
   const holdStartTimeoutRef = useRef<Map<number, number>>(new Map());
   const holdIntervalRef = useRef<Map<number, number>>(new Map());
   const suppressClickRef = useRef<Set<number>>(new Set());
@@ -69,6 +72,7 @@ function App() {
       createdAt: new Date()
     };
     setOrders((prev) => [nextOrder, ...prev]);
+    setAddedNotice({ id: Date.now(), name: selected.name });
   };
 
   const addVisitor = (event: FormEvent<HTMLFormElement>) => {
@@ -373,7 +377,6 @@ function App() {
                         className="menu-item"
                         onClick={() => {
                           addOrderFromMenu(item.id);
-                          setIsMenuDrawerOpen(false);
                         }}
                       >
                         <span>{item.name}</span>
@@ -486,6 +489,15 @@ function App() {
         </div>
       ) : null}
       </main>
+      <Snackbar
+        key={addedNotice?.id}
+        open={Boolean(addedNotice)}
+        autoHideDuration={1000}
+        onClose={() => setAddedNotice(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        TransitionComponent={Grow}
+        message={addedNotice ? `${addedNotice.name} を追加しました` : ""}
+      />
     </>
   );
 }

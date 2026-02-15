@@ -3,10 +3,16 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import App from "./App";
 
-async function addOrderFromMenu(user: ReturnType<typeof userEvent.setup>) {
+async function addOrderFromMenu(
+  user: ReturnType<typeof userEvent.setup>,
+  options?: { keepMenuOpen?: boolean }
+) {
   await user.click(screen.getByRole("button", { name: "メニューを開く" }));
   expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: /ハイボール/ }));
+  if (!options?.keepMenuOpen) {
+    await user.click(screen.getByRole("button", { name: "閉じる" }));
+  }
 }
 
 function getFirstOrderRow() {
@@ -31,9 +37,10 @@ describe("App", () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await addOrderFromMenu(user);
+    await addOrderFromMenu(user, { keepMenuOpen: true });
 
-    expect(screen.queryByRole("heading", { name: "メニュー" })).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
+    expect(screen.getByText("ハイボール を追加しました")).toBeInTheDocument();
     const row = getFirstOrderRow();
     expect(within(row).getByText("ハイボール")).toBeInTheDocument();
     expect(within(row).getByText(/1杯/)).toBeInTheDocument();
@@ -104,7 +111,7 @@ describe("App", () => {
     const input = screen.getByPlaceholderText("例: A卓 / 田中さんグループ");
     await user.type(input, "A卓");
     await user.click(screen.getByRole("button", { name: "来店者を追加" }));
-    expect(screen.getByText("A卓")).toBeInTheDocument();
+    expect(screen.getByText(/A卓/)).toBeInTheDocument();
 
     await user.clear(input);
     await user.type(input, "A卓");
