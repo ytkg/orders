@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, test, vi } from "vitest";
-import type { MenuItem } from "../../../menu";
+import type { MenuItem } from "../model/menuItems";
 import { MenuDialog } from "./MenuDialog";
 
 const GROUPED_MENU: Array<[string, MenuItem[]]> = [
@@ -23,7 +23,7 @@ const GROUPED_MENU: Array<[string, MenuItem[]]> = [
 
 function renderDialog(options?: {
   groupedMenu?: Array<[string, MenuItem[]]>;
-  onSelectMenuItem?: (menuId: number) => void;
+  onSelectMenuItem?: (menuItem: MenuItem) => void;
 }) {
   return render(
     <MenuDialog
@@ -87,6 +87,8 @@ describe("MenuDialog", () => {
     renderDialog({ onSelectMenuItem });
 
     await user.click(screen.getByRole("button", { name: /ハイボール/ }));
-    expect(onSelectMenuItem).toHaveBeenCalledWith(3);
+    expect(onSelectMenuItem).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 3, name: "ハイボール" })
+    );
   });
 });

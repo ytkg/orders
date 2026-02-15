@@ -1,4 +1,4 @@
-import { MENU_ITEMS, type MenuItem } from "../../../menu";
+import { MENU_ITEMS, type MenuItem } from "./menuItems";
 
 export function groupMenuItemsByCategory(
   menuItems: MenuItem[] = MENU_ITEMS

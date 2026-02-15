@@ -1,5 +1,4 @@
 import { useMemo, useState } from "react";
-import { MENU_ITEMS } from "../../../menu";
 import { generateId } from "../../../shared/utils/id";
 import { MAX_QUANTITY, MIN_QUANTITY } from "../model/constants";
 import type { ConfirmedOrder, OrderMemo } from "../model/types";
@@ -7,6 +6,11 @@ import type { ConfirmedOrder, OrderMemo } from "../model/types";
 type AddedNotice = {
   id: string;
   name: string;
+};
+
+type SelectedMenuItem = {
+  name: string;
+  price: number;
 };
 
 export function useOrderMemo() {
@@ -44,12 +48,7 @@ export function useOrderMemo() {
     return Array.from(grouped.values());
   }, [confirmedOrders]);
 
-  const addOrderFromMenu = (menuId: number) => {
-    const selected = MENU_ITEMS.find((item) => item.id === menuId);
-    if (!selected) {
-      return;
-    }
-
+  const addOrderFromMenu = (selected: SelectedMenuItem) => {
     const nextOrder: OrderMemo = {
       id: generateId("order"),
       drink: selected.name,

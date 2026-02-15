@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import App from "./App";
+import App from "./app/App";
 
 function getDialogByName(name: string) {
   return screen.getByRole("dialog", { name });

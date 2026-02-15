@@ -1,12 +1,12 @@
 import { SyntheticEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Dialog, DialogContent, Tab, Tabs } from "@mui/material";
-import type { MenuItem } from "../../../menu";
+import type { MenuItem } from "../model/menuItems";
 
 type MenuDialogProps = {
   open: boolean;
   groupedMenu: Array<[string, MenuItem[]]>;
   onClose: () => void;
-  onSelectMenuItem: (menuId: number) => void;
+  onSelectMenuItem: (menuItem: MenuItem) => void;
 };
 
 const ALL_CATEGORIES = "__all__";
@@ -141,7 +141,7 @@ export function MenuDialog({
                       key={item.id}
                       variant="outlined"
                       className="menu-item"
-                      onClick={() => onSelectMenuItem(item.id)}
+                      onClick={() => onSelectMenuItem(item)}
                     >
                       <span>{item.name}</span>
                       <small>{item.price}円</small>

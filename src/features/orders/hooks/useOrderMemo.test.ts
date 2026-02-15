@@ -7,7 +7,7 @@ function addHighballOrder(
   result: { current: ReturnType<typeof useOrderMemo> }
 ) {
   act(() => {
-    result.current.addOrderFromMenu(23);
+    result.current.addOrderFromMenu({ name: "ハイボール", price: 700 });
   });
 
   const orderId = result.current.orders[0]?.id;
