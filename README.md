@@ -16,6 +16,15 @@ npm run test
 npm run test:watch
 ```
 
+計測ルールと目標値は `docs/test-performance.md` を参照してください。
+
+## テスト構成ルール
+
+- UI統合テストは代表的なユーザー操作に絞る
+- 境界値や上限判定は hook / utility の単体テストで担保する
+- DOMクエリは `within(...)` を優先し、探索範囲を明示する
+- 変更時は実行時間の前後差分を記録する
+
 ## 実装済み機能
 
 - UIライブラリとして Material UI（MUI）を導入

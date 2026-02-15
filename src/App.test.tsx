@@ -3,23 +3,82 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import App from "./App";
 
+function getDialogByName(name: string) {
+  return screen.getByRole("dialog", { name });
+}
+
+function getOrderSection() {
+  const heading = screen.getByRole("heading", { name: "現在のメモ", hidden: true });
+  const section = heading.closest("section");
+  expect(section).not.toBeNull();
+  return section as HTMLElement;
+}
+
+function getOrderRows(options?: { includeHidden?: boolean }) {
+  return within(getOrderSection()).getAllByRole("listitem", {
+    hidden: options?.includeHidden ?? false
+  });
+}
+
 async function addOrderFromMenu(
   user: ReturnType<typeof userEvent.setup>,
   options?: { keepMenuOpen?: boolean }
 ) {
   await user.click(screen.getByRole("button", { name: "メニューを開く" }));
-  expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
-  await user.click(screen.getByRole("button", { name: /ハイボール/ }));
+  const menuDialog = getDialogByName("メニュー");
+  const menuDialogScope = within(menuDialog);
+  await user.click(menuDialogScope.getByRole("button", { name: /ハイボール/ }));
   if (!options?.keepMenuOpen) {
-    await user.click(screen.getByRole("button", { name: "閉じる" }));
+    await user.click(menuDialogScope.getByRole("button", { name: "閉じる" }));
     await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "メニュー" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "メニュー" })).not.toBeInTheDocument();
     });
   }
 }
 
+async function addHighballOrders(
+  user: ReturnType<typeof userEvent.setup>,
+  count: number
+) {
+  await user.click(screen.getByRole("button", { name: "メニューを開く" }));
+  const menuDialog = getDialogByName("メニュー");
+  const menuDialogScope = within(menuDialog);
+
+  for (let i = 0; i < count; i += 1) {
+    await user.click(menuDialogScope.getByRole("button", { name: /ハイボール/ }));
+  }
+
+  await user.click(menuDialogScope.getByRole("button", { name: "閉じる" }));
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog", { name: "メニュー" })).not.toBeInTheDocument();
+  });
+}
+
+async function addVisitor(
+  user: ReturnType<typeof userEvent.setup>,
+  visitorName: string
+) {
+  await user.click(screen.getByRole("button", { name: "来店者を管理" }));
+  const visitorDialog = getDialogByName("来店者（グループ）管理");
+  const visitorDialogScope = within(visitorDialog);
+  await user.type(
+    visitorDialogScope.getByRole("textbox", { name: "来店者名" }),
+    visitorName
+  );
+  await user.click(visitorDialogScope.getByRole("button", { name: "来店者を追加" }));
+}
+
+async function closeVisitorDialog(user: ReturnType<typeof userEvent.setup>) {
+  const visitorDialog = getDialogByName("来店者（グループ）管理");
+  const visitorDialogScope = within(visitorDialog);
+  await user.click(visitorDialogScope.getByRole("button", { name: "閉じる" }));
+  await waitFor(() => {
+    expect(screen.queryByRole("dialog", { name: "来店者（グループ）管理" })).not.toBeInTheDocument();
+  });
+}
+
 function getFirstOrderRow(options?: { includeHidden?: boolean }) {
-  return screen.getAllByRole("listitem", { hidden: options?.includeHidden ?? false })[0] as HTMLLIElement;
+  return getOrderRows(options)[0] as HTMLLIElement;
 }
 
 describe("App", () => {
@@ -42,7 +101,7 @@ describe("App", () => {
 
     await addOrderFromMenu(user, { keepMenuOpen: true });
 
-    expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "メニュー" })).toBeInTheDocument();
     expect(screen.getByText("ハイボール を追加しました")).toBeInTheDocument();
     const row = getFirstOrderRow({ includeHidden: true });
     expect(within(row).getByText("ハイボール")).toBeInTheDocument();
@@ -63,21 +122,18 @@ describe("App", () => {
     expect(within(row).getByText("2")).toBeInTheDocument();
   });
 
-  test("T4: 個数変更（上限）", async () => {
+  test("T4: 個数変更（UI連打）", async () => {
     const user = userEvent.setup();
     render(<App />);
     await addOrderFromMenu(user);
     const row = getFirstOrderRow();
     const plusButton = within(row).getByRole("button", { name: "個数を1増やす" });
 
-    for (let i = 0; i < 120; i += 1) {
+    for (let i = 0; i < 5; i += 1) {
       fireEvent.click(plusButton);
     }
 
-    expect(within(row).getByText("99")).toBeInTheDocument();
-
-    fireEvent.click(plusButton);
-    expect(within(row).getByText("99")).toBeInTheDocument();
+    expect(within(row).getByText("6")).toBeInTheDocument();
   });
 
   test("T5: 注文者変更", async () => {
@@ -85,15 +141,8 @@ describe("App", () => {
     render(<App />);
     await addOrderFromMenu(user);
 
-    await user.click(screen.getByRole("button", { name: "来店者を管理" }));
-    await user.type(screen.getByPlaceholderText("例: A卓 / 田中さんグループ"), "田中グループ");
-    await user.click(screen.getByRole("button", { name: "来店者を追加" }));
-    await user.click(screen.getByRole("button", { name: "閉じる" }));
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
-      ).not.toBeInTheDocument();
-    });
+    await addVisitor(user, "田中グループ");
+    await closeVisitorDialog(user);
 
     const row = getFirstOrderRow();
     const combobox = within(row).getByRole("combobox");
@@ -106,15 +155,17 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "来店者を管理" }));
-    const input = screen.getByPlaceholderText("例: A卓 / 田中さんグループ");
+    const visitorDialog = getDialogByName("来店者（グループ）管理");
+    const visitorDialogScope = within(visitorDialog);
+    const input = visitorDialogScope.getByRole("textbox", { name: "来店者名" });
     await user.type(input, "A卓");
-    await user.click(screen.getByRole("button", { name: "来店者を追加" }));
-    expect(screen.getByText(/A卓/)).toBeInTheDocument();
+    await user.click(visitorDialogScope.getByRole("button", { name: "来店者を追加" }));
+    expect(visitorDialogScope.getByText(/A卓/)).toBeInTheDocument();
 
     await user.clear(input);
     await user.type(input, "A卓");
-    await user.click(screen.getByRole("button", { name: "来店者を追加" }));
-    expect(screen.getByText("同じ来店者名は登録できません。")).toBeInTheDocument();
+    await user.click(visitorDialogScope.getByRole("button", { name: "来店者を追加" }));
+    expect(visitorDialogScope.getByText("同じ来店者名は登録できません。")).toBeInTheDocument();
   });
 
   test("T7: 確認モーダル表示とメモ保持", async () => {
@@ -139,31 +190,48 @@ describe("App", () => {
     const confirmSpy = vi.spyOn(window, "confirm");
     confirmSpy.mockReturnValueOnce(false);
     await user.click(screen.getByRole("button", { name: "メモをリセット" }));
-    expect(screen.getByText("ハイボール")).toBeInTheDocument();
+    expect(within(getFirstOrderRow()).getByText("ハイボール")).toBeInTheDocument();
 
     confirmSpy.mockReturnValueOnce(true);
     await user.click(screen.getByRole("button", { name: "メモをリセット" }));
-    expect(screen.getByText("まだメモはありません。")).toBeInTheDocument();
+    expect(within(getOrderSection()).getByText("まだメモはありません。")).toBeInTheDocument();
   });
 
-  test("T9: 確認画面で同一商品・同一注文者を合算表示", async () => {
+  test("T9-1: 来店者登録後に注文者候補として選択できる", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await addOrderFromMenu(user);
+
+    await addVisitor(user, "A卓");
+    await closeVisitorDialog(user);
+
+    const row = getFirstOrderRow();
+    const combobox = within(row).getByRole("combobox");
+    await user.selectOptions(combobox, "A卓");
+    expect(combobox).toHaveValue("A卓");
+  });
+
+  test("T9-2: 同一商品を連続追加して2件の注文行を作れる", async () => {
     const user = userEvent.setup();
     render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "来店者を管理" }));
-    await user.type(screen.getByPlaceholderText("例: A卓 / 田中さんグループ"), "A卓");
-    await user.click(screen.getByRole("button", { name: "来店者を追加" }));
-    await user.click(screen.getByRole("button", { name: "閉じる" }));
-    await waitFor(() => {
-      expect(
-        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
-      ).not.toBeInTheDocument();
-    });
+    await addHighballOrders(user, 2);
 
-    await addOrderFromMenu(user);
-    await addOrderFromMenu(user);
+    const rows = getOrderRows();
+    expect(rows).toHaveLength(2);
+    expect(within(rows[0]).getByText("ハイボール")).toBeInTheDocument();
+    expect(within(rows[1]).getByText("ハイボール")).toBeInTheDocument();
+  });
 
-    const rows = screen.getAllByRole("listitem");
+  test("T9-3: 確認画面で同一商品・同一注文者を合算表示", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await addVisitor(user, "A卓");
+    await closeVisitorDialog(user);
+    await addHighballOrders(user, 2);
+
+    const rows = getOrderRows();
     const firstSelect = within(rows[0]).getByRole("combobox");
     await user.selectOptions(firstSelect, "A卓");
 
@@ -182,19 +250,17 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "メニューを開く" }));
-    expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "メニュー" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await waitFor(() => {
-      expect(screen.queryByRole("heading", { name: "メニュー" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "メニュー" })).not.toBeInTheDocument();
     });
 
     await user.click(screen.getByRole("button", { name: "来店者を管理" }));
-    expect(screen.getByRole("heading", { name: "来店者（グループ）管理" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "来店者（グループ）管理" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     await waitFor(() => {
-      expect(
-        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
-      ).not.toBeInTheDocument();
+      expect(screen.queryByRole("dialog", { name: "来店者（グループ）管理" })).not.toBeInTheDocument();
     });
   });
 
@@ -204,7 +270,7 @@ describe("App", () => {
 
     const triggerButton = screen.getByRole("button", { name: "来店者を管理" });
     await user.click(triggerButton);
-    expect(screen.getByRole("heading", { name: "来店者（グループ）管理" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "来店者（グループ）管理" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
 
     await waitFor(() => {
