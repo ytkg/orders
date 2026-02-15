@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import App from "./App";
@@ -12,11 +12,14 @@ async function addOrderFromMenu(
   await user.click(screen.getByRole("button", { name: /ハイボール/ }));
   if (!options?.keepMenuOpen) {
     await user.click(screen.getByRole("button", { name: "閉じる" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "メニュー" })).not.toBeInTheDocument();
+    });
   }
 }
 
-function getFirstOrderRow() {
-  return screen.getAllByRole("listitem")[0] as HTMLLIElement;
+function getFirstOrderRow(options?: { includeHidden?: boolean }) {
+  return screen.getAllByRole("listitem", { hidden: options?.includeHidden ?? false })[0] as HTMLLIElement;
 }
 
 describe("App", () => {
@@ -41,7 +44,7 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
     expect(screen.getByText("ハイボール を追加しました")).toBeInTheDocument();
-    const row = getFirstOrderRow();
+    const row = getFirstOrderRow({ includeHidden: true });
     expect(within(row).getByText("ハイボール")).toBeInTheDocument();
     expect(within(row).getByText(/1杯/)).toBeInTheDocument();
     expect(within(row).getByText(/注文者未入力/)).toBeInTheDocument();
@@ -95,12 +98,16 @@ describe("App", () => {
     await user.type(screen.getByPlaceholderText("例: A卓 / 田中さんグループ"), "田中グループ");
     await user.click(screen.getByRole("button", { name: "来店者を追加" }));
     await user.click(screen.getByRole("button", { name: "閉じる" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
+      ).not.toBeInTheDocument();
+    });
 
     const row = getFirstOrderRow();
     const combobox = within(row).getByRole("combobox");
-    await user.click(combobox);
-    await user.click(await screen.findByRole("option", { name: "田中グループ" }));
-    expect(combobox).toHaveTextContent("田中グループ");
+    await user.selectOptions(combobox, "田中グループ");
+    expect(combobox).toHaveValue("田中グループ");
   });
 
   test("T6: 来店者追加と重複エラー", async () => {
@@ -125,9 +132,8 @@ describe("App", () => {
     await addOrderFromMenu(user);
 
     await user.click(screen.getByRole("button", { name: "確認" }));
-    const confirmView = screen.getByRole("heading", { name: "確定オーダー" }).closest("section");
-    expect(confirmView).not.toBeNull();
-    expect(within(confirmView as HTMLElement).getByText("ハイボール")).toBeInTheDocument();
+    const confirmDialog = screen.getByRole("dialog", { name: "確定オーダー" });
+    expect(within(confirmDialog).getByText("ハイボール")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "通常表示へ戻る" }));
     const row = getFirstOrderRow();
@@ -157,24 +163,61 @@ describe("App", () => {
     await user.type(screen.getByPlaceholderText("例: A卓 / 田中さんグループ"), "A卓");
     await user.click(screen.getByRole("button", { name: "来店者を追加" }));
     await user.click(screen.getByRole("button", { name: "閉じる" }));
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
+      ).not.toBeInTheDocument();
+    });
 
     await addOrderFromMenu(user);
     await addOrderFromMenu(user);
 
     const rows = screen.getAllByRole("listitem");
     const firstSelect = within(rows[0]).getByRole("combobox");
-    await user.click(firstSelect);
-    await user.click(await screen.findByRole("option", { name: "A卓" }));
+    await user.selectOptions(firstSelect, "A卓");
 
     const secondSelect = within(rows[1]).getByRole("combobox");
-    await user.click(secondSelect);
-    await user.click(await screen.findByRole("option", { name: "A卓" }));
+    await user.selectOptions(secondSelect, "A卓");
 
     await user.click(screen.getByRole("button", { name: "確認" }));
-    const confirmView = screen.getByRole("heading", { name: "確定オーダー" }).closest("section");
-    expect(confirmView).not.toBeNull();
-    const scoped = within(confirmView as HTMLElement);
+    const confirmDialog = screen.getByRole("dialog", { name: "確定オーダー" });
+    const scoped = within(confirmDialog);
     expect(scoped.getByText("1 件 / 合計 2 杯")).toBeInTheDocument();
     expect(scoped.getByText("2杯 / A卓")).toBeInTheDocument();
+  });
+
+  test("T10: モーダルはEscapeで閉じる", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "メニューを開く" }));
+    expect(screen.getByRole("heading", { name: "メニュー" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(screen.queryByRole("heading", { name: "メニュー" })).not.toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "来店者を管理" }));
+    expect(screen.getByRole("heading", { name: "来店者（グループ）管理" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    await waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "来店者（グループ）管理" })
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  test("T11: モーダルを閉じるとトリガーへフォーカスが戻る", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    const triggerButton = screen.getByRole("button", { name: "来店者を管理" });
+    await user.click(triggerButton);
+    expect(screen.getByRole("heading", { name: "来店者（グループ）管理" })).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+
+    await waitFor(() => {
+      expect(triggerButton).toHaveFocus();
+    });
   });
 });
