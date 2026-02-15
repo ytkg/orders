@@ -21,13 +21,56 @@ type Visitor = {
 
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 99;
+const VISITORS_COOKIE_KEY = "bar_visitors";
+
+function readVisitorsFromCookie(): Visitor[] {
+  if (typeof document === "undefined") {
+    return [];
+  }
+  const cookie = document.cookie
+    .split("; ")
+    .find((part) => part.startsWith(`${VISITORS_COOKIE_KEY}=`));
+  if (!cookie) {
+    return [];
+  }
+  const encoded = cookie.split("=")[1];
+  if (!encoded) {
+    return [];
+  }
+  try {
+    const decoded = decodeURIComponent(encoded);
+    const parsed = JSON.parse(decoded) as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+    return parsed
+      .filter(
+        (item): item is Visitor =>
+          typeof item === "object" &&
+          item !== null &&
+          typeof (item as Visitor).id === "number" &&
+          typeof (item as Visitor).name === "string"
+      )
+      .map((item) => ({ id: item.id, name: item.name }));
+  } catch {
+    return [];
+  }
+}
+
+function writeVisitorsToCookie(visitors: Visitor[]) {
+  if (typeof document === "undefined") {
+    return;
+  }
+  const encoded = encodeURIComponent(JSON.stringify(visitors));
+  document.cookie = `${VISITORS_COOKIE_KEY}=${encoded}; path=/; max-age=31536000; samesite=lax`;
+}
 
 function App() {
   const [newVisitorName, setNewVisitorName] = useState("");
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isVisitorModalOpen, setIsVisitorModalOpen] = useState(false);
   const [isConfirmedViewOpen, setIsConfirmedViewOpen] = useState(false);
-  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [visitors, setVisitors] = useState<Visitor[]>(() => readVisitorsFromCookie());
   const [orders, setOrders] = useState<OrderMemo[]>([]);
   const [confirmedOrders, setConfirmedOrders] = useState<ConfirmedOrder[]>([]);
   const [visitorError, setVisitorError] = useState("");
@@ -224,6 +267,9 @@ function App() {
       });
     };
   }, []);
+  useEffect(() => {
+    writeVisitorsToCookie(visitors);
+  }, [visitors]);
 
   return (
     <>
